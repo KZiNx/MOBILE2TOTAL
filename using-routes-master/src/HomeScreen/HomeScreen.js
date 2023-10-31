@@ -1,36 +1,77 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import metadata from "./../storage.medata.json";
-import { useEffect, useState } from "react";
-import { Button, Text, View } from "react-native";
-import {useIsFocused} from "@react-navigation/native";
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Button, StyleSheet } from 'react-native';
 
 const HomeScreen = ({ navigation }) => {
-    const [name, setName] = useState("");
-    const focus = useIsFocused();
-    useEffect(() => { getUserName() }, [])
+    const [lists, setLists] = useState([]);
+  
+    useEffect(() => {
+    
+      const mockLists = [
+        { id: '1', name: 'Lista de Compras', lastModified: new Date() },
+        { id: '2', name: 'Tarefas de Hoje', lastModified: new Date() },
+      ];
+      setLists(mockLists);
+    }, []);
+  
+    const handleEditList = (list) => {
 
-    const getUserName = async () => {
-        const userName = await AsyncStorage.getItem(metadata.USER.USERNAME);
-        if (userName) {
-            setName(userName);
-        }
-    }
+      navigation.navigate('EditList', { list });
+    };
+  
+    const handleDeleteList = (listId) => {
+      setLists((prevLists) => prevLists.filter((list) => list.id !== listId));
+    };
+  
     return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text>Home Screen</Text>
-            {name &&
-                <View>
-                    <Text>
-                        Olá usuário {name}
-                    </Text>
-                </View>
-            }
-            <Button
-                title="Go to User Data"
-                onPress={() => navigation.navigate("UserData")}
-            />
-        </View>
+      <View style={styles.container}>
+        <Text style={styles.title}>Suas Listas</Text>
+        <FlatList
+          data={lists}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.listItem}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('List', { list: item })}
+              >
+                <Text>{item.name}</Text>
+              </TouchableOpacity>
+              <Button title="Editar" onPress={() => handleEditList(item)} />
+              <Button
+                title="Excluir"
+                onPress={() => handleDeleteList(item.id)}
+              />
+            </View>
+          )}
+        />
+        <Button
+          title="Adicionar Lista"
+          onPress={() => {
+          
+            navigation.navigate('EditList', { list: null });
+          }}
+        />
+      </View>
     );
-}
+  };
+  
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  listItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+});
 
 export default HomeScreen;
