@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "using-routes",
-    "slug": "using-routes",
+    "name": "listaTarefas",
+    "slug": "listaTarefas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
