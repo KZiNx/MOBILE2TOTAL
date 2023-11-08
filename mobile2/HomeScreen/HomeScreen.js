@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, Text, View, FlatList, TouchableOpacity, TextInput } from "react-native";
 
 function HomeScreen({ navigation }) {
@@ -40,37 +40,18 @@ function HomeScreen({ navigation }) {
     }
   }
 
+  const navigateToItemList = (listName) => {
+    navigation.navigate('ItemList', { listName });
+  }
+
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <Text>Aqui estão as suas listas</Text>
 
       <Button
         title="Adicionar Lista"
-        onPress={() => navigation.navigate('Adicionar Lista')}
-      />
-
-      <Button
-        title="Adicionar Lista"
         onPress={addList}
       />
-
-      <Button
-        title="Remover Lista"
-        onPress={() => deleteList(editingIndex)}
-      />
-
-      {editingIndex !== null ? (
-        <View>
-          <TextInput
-            value={editedName}
-            onChangeText={(text) => setEditedName(text)}
-          />
-          <Button
-            title="Salvar"
-            onPress={saveEditedListName}
-          />
-        </View>
-      ) : null}
 
       <Text>Você tem {quantidadeLista}/10</Text>
 
@@ -79,7 +60,7 @@ function HomeScreen({ navigation }) {
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => (
           <View>
-            <TouchableOpacity onPress={() => navigation.navigate('Detalhes da Lista', { lista: item })}>
+            <TouchableOpacity onPress={() => navigateToItemList(item)}>
               {editingIndex === index ? (
                 <TextInput
                   value={editedName}
@@ -95,10 +76,16 @@ function HomeScreen({ navigation }) {
                 onPress={saveEditedListName}
               />
             ) : (
-              <Button
-                title="Editar Nome"
-                onPress={() => editListName(index)}
-              />
+              <>
+                <Button
+                  title="Editar Nome"
+                  onPress={() => editListName(index)}
+                />
+                <Button
+                  title="Remover Lista"
+                  onPress={() => deleteList(index)}
+                />
+              </>
             )}
           </View>
         )}
