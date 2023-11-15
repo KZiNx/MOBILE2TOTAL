@@ -1,4 +1,5 @@
-quero 4 tela na tela homescreen tem que ter um botao para adicionar uma lista e abaixo tem que ter um espaco com a listname1 o botao para editar e um para apagar a listname , onde seja apenas possivel ter 10 listas e ao clickar em uma lista va para a tela listname1 onde tenha um botao para adicionar um item a lista e abaixo um espaco do item name 1 e botao para editar e apagar , na tela de editar/adicionar lista tem que ter o espaco para o nome da lista que seja mudavel e um botao abaixo para adicionar a lista a lista de listas e na tela para editar/adicionar item a mesma coisa porem com item ao inves de lista seguindo esse padrao import React, { useState, useEffect } from "react";
+arrume o código 
+import React, { useState } from "react";
 import { Button, Text, View, FlatList, TouchableOpacity, TextInput } from "react-native";
 
 function HomeScreen({ navigation }) {
@@ -40,37 +41,18 @@ function HomeScreen({ navigation }) {
     }
   }
 
+  const navigateToItemList = (listName) => {
+    navigation.navigate('ItemList', { listName });
+  }
+
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <Text>Aqui estão as suas listas</Text>
 
       <Button
         title="Adicionar Lista"
-        onPress={() => navigation.navigate('Adicionar Lista')}
-      />
-
-      <Button
-        title="Adicionar Lista"
         onPress={addList}
       />
-
-      <Button
-        title="Remover Lista"
-        onPress={() => deleteList(editingIndex)}
-      />
-
-      {editingIndex !== null ? (
-        <View>
-          <TextInput
-            value={editedName}
-            onChangeText={(text) => setEditedName(text)}
-          />
-          <Button
-            title="Salvar"
-            onPress={saveEditedListName}
-          />
-        </View>
-      ) : null}
 
       <Text>Você tem {quantidadeLista}/10</Text>
 
@@ -79,7 +61,7 @@ function HomeScreen({ navigation }) {
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item, index }) => (
           <View>
-            <TouchableOpacity onPress={() => navigation.navigate('Detalhes da Lista', { lista: item })}>
+            <TouchableOpacity onPress={() => navigateToItemList(item)}>
               {editingIndex === index ? (
                 <TextInput
                   value={editedName}
@@ -95,10 +77,16 @@ function HomeScreen({ navigation }) {
                 onPress={saveEditedListName}
               />
             ) : (
-              <Button
-                title="Editar Nome"
-                onPress={() => editListName(index)}
-              />
+              <>
+                <Button
+                  title="Editar Nome"
+                  onPress={() => editListName(index)}
+                />
+                <Button
+                  title="Remover Lista"
+                  onPress={() => deleteList(index)}
+                />
+              </>
             )}
           </View>
         )}
@@ -106,5 +94,210 @@ function HomeScreen({ navigation }) {
     </View>
   );
 }
-
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3c3c3c',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#3c3c3c',
+    borderColor: '#ffffff',
+    borderWidth: 2,
+    padding: 10,
+    margin: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    color: '#ffffff',
+    fontSize: 16,
+    margin: 10,
+  },
+  input: {
+    color: '#ffffff',
+    borderColor: '#ffffff',
+    borderWidth: 1,
+    padding: 10,
+    margin: 10,
+  },
+});
 export default HomeScreen;
+--------------------------------------
+import React, { useState, useEffect } from "react";
+import { Button, Text, View, FlatList, TouchableOpacity, TextInput, StyleSheet } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const ItemList = ({ route, navigation }) => {
+  const [lista, setLista] = useState({ name: route.params.listName, items: [] });
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editedName, setEditedName] = useState("");
+
+  useEffect(() => {
+    const loadList = async () => {
+      try {
+        const storedList = await AsyncStorage.getItem(`Lista-${lista.name}`);
+        if (storedList) {
+          setLista({ name: lista.name, items: JSON.parse(storedList) });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar lista do AsyncStorage:', error);
+      }
+    };
+
+    loadList();
+  }, [lista.name]);
+
+  useEffect(() => {
+    const saveList = async () => {
+      try {
+        await AsyncStorage.setItem(`Lista-${lista.name}`, JSON.stringify(lista.items));
+      } catch (error) {
+        console.error('Erro ao salvar lista no AsyncStorage:', error);
+      }
+    };
+
+    if (lista.items.length) {
+      saveList();
+    }
+  }, [lista]);
+
+  const addItem = () => {
+    if (lista.items.length < 10) {
+      const newItem = { nome: `Item ${lista.items.length + 1}`, dataAlteracao: new Date() };
+      setLista((prevList) => ({ ...prevList, items: [...prevList.items, newItem] }));
+    } else {
+      alert("Você não pode mais adicionar itens a esta lista");
+    }
+  };
+
+  const deleteItem = (index) => {
+    if (lista.items.length > 0) {
+      const updatedItems = [...lista.items];
+      updatedItems.splice(index, 1);
+      setLista((prevList) => ({ ...prevList, items: updatedItems }));
+    }
+  };
+
+  const editItemName = (index) => {
+    setEditingIndex(index);
+    setEditedName(lista.items[index].nome);
+  };
+
+  const saveEditedItemName = () => {
+    if (editingIndex !== null) {
+      const updatedItems = [...lista.items];
+      updatedItems[editingIndex] = { nome: editedName, dataAlteracao: new Date() };
+      setLista((prevList) => ({ ...prevList, items: updatedItems }));
+      setEditingIndex(null);
+    }
+  };
+
+  
+  const sortedItems = lista.items.sort((a, b) => b.dataAlteracao - a.dataAlteracao);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.listName}>Itens da Lista: {lista.name}</Text>
+
+      <Button
+        title="Adicionar Item"
+        onPress={addItem}
+      />
+
+      <FlatList
+        data={sortedItems}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item, index }) => (
+          <View style={styles.itemContainer}>
+            <TouchableOpacity>
+              {editingIndex === index ? (
+                <TextInput
+                  style={styles.editInput}
+                  value={editedName}
+                  onChangeText={(text) => setEditedName(text)}
+                />
+              ) : (
+                <Text style={styles.itemText}>{item.nome}</Text>
+              )}
+            </TouchableOpacity>
+            {editingIndex === index ? (
+              <Button
+                title="Salvar"
+                onPress={saveEditedItemName}
+              />
+            ) : (
+              <>
+                <Button
+                  title="Editar Nome"
+                  onPress={() => editItemName(index)}
+                />
+                <Button
+                  title="Remover Item"
+                  onPress={() => deleteItem(index)}
+                />
+              </>
+            )}
+          </View>
+        )}
+      />
+    </View>
+  );
+};
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3c3c3c',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: '#3c3c3c',
+    borderColor: '#ffffff',
+    borderWidth: 2,
+    padding: 10,
+    margin: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    color: '#ffffff',
+    fontSize: 16,
+    margin: 10,
+  },
+  input: {
+    color: '#ffffff',
+    borderColor: '#ffffff',
+    borderWidth: 1,
+    padding: 10,
+    margin: 10,
+  },
+  itemContainer: {
+    marginBottom: 10,
+  },
+  itemText: {
+    fontSize: 16,
+    color: 'white',
+  },
+  editInput: {
+    height: 40,
+    borderColor: 'white',
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    color: 'white',
+  },
+});
+
+export default ItemList;
+
